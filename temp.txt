@@ -1,0 +1,351 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:nhl_app/core/router/routes.dart';
+import 'package:nhl_app/core/theme/colors.dart';
+
+class ShellScaffold extends StatefulWidget {
+  const ShellScaffold({
+    super.key,
+    required this.navigationShell,
+    required this.currentTab,
+  });
+  final StatefulNavigationShell navigationShell;
+  final AppTab currentTab;
+
+  @override
+  State<ShellScaffold> createState() => _ShellScaffoldState();
+}
+
+class _ShellScaffoldState extends State<ShellScaffold> {
+  late final ValueNotifier<String> _titleNotifier =
+      ValueNotifier<String>('NHL Games');
+  late final AppBarActionsCoordinator _actionsCoordinator =
+      AppBarActionsCoordinator()..setActiveTab(widget.currentTab);
+
+  @override
+  void dispose() {
+    _titleNotifier.dispose();
+    _actionsCoordinator.dispose();
+    super.dispose();
+  }
+
+  int get _index => widget.navigationShell.currentIndex;
+
+  void _onTap(BuildContext context, int i) {
+    widget.navigationShell.goBranch(i, initialLocation: i == _index);
+    _actionsCoordinator.setActiveTab(_tabForIndex(i));
+  }
+
+  @override
+  void didUpdateWidget(covariant ShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentTab != widget.currentTab) {
+      _actionsCoordinator.setActiveTab(widget.currentTab);
+    }
+  }
+
+  AppTab _tabForIndex(int index) {
+    switch (index) {
+      case 0:
+        return AppTab.upcoming;
+      case 1:
+        return AppTab.standings;
+      case 2:
+        return AppTab.teams;
+      case 3:
+        return AppTab.favorites;
+      case 4:
+      default:
+        return AppTab.predictor;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        extendBody: true,
+        appBar: AppBar(
+          actionsPadding: EdgeInsets.only(right: 15),
+          titleSpacing: 30,
+          toolbarHeight: 65,
+          backgroundColor: CustomColors.appbarColor,
+          title: ValueListenableBuilder<String>(
+            valueListenable: _titleNotifier,
+            builder: (context, value, _) => Text(
+              value,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          actions: [
+            AnimatedBuilder(
+              animation: _actionsCoordinator,
+              builder: (context, _) {
+                final extras = _actionsCoordinator.currentActions;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...extras,
+                    IconButton(
+                      onPressed: () {},
+                      icon: Image.asset(
+                        'assets/icons/settings.png',
+                        width: 25,
+                        height: 25,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        body: AppBarTitleScope(
+          notifier: _titleNotifier,
+          child: CurrentTabScope(
+            currentTab: widget.currentTab,
+            child: AppBarActionsScope(
+              coordinator: _actionsCoordinator,
+              child: widget.navigationShell,
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            child: Container(
+              height: 64,
+              decoration: BoxDecoration(
+                color: CustomColors.navbarColor,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _IconBtn(
+                    asset: 'assets/icons/home.png',
+                    label: 'Home',
+                    active: _index == 0,
+                    onTap: () => _onTap(context, 0),
+                  ),
+                  _IconBtn(
+                    asset: 'assets/icons/standings.png',
+                    label: 'Standings',
+                    active: _index == 1,
+                    onTap: () => _onTap(context, 1),
+                  ),
+                  _IconBtn(
+                    asset: 'assets/icons/teams.png',
+                    label: 'Teams',
+                    active: _index == 2,
+                    onTap: () => _onTap(context, 2),
+                  ),
+                  _IconBtn(
+                    asset: 'assets/icons/favorite.png',
+                    label: 'Favorites',
+                    active: _index == 3,
+                    onTap: () => _onTap(context, 3),
+                  ),
+                  _IconBtn(
+                    asset: 'assets/icons/predictor.png',
+                    label: 'Predictor',
+                    active: _index == 4,
+                    onTap: () => _onTap(context, 4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AppBarTitleScope extends InheritedNotifier<ValueNotifier<String>> {
+  const AppBarTitleScope({
+    super.key,
+    required ValueNotifier<String> notifier,
+    required Widget child,
+  }) : super(notifier: notifier, child: child);
+
+  static ValueNotifier<String>? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<AppBarTitleScope>()
+        ?.notifier;
+  }
+}
+
+class CurrentTabScope extends InheritedWidget {
+  const CurrentTabScope({
+    super.key,
+    required this.currentTab,
+    required super.child,
+  });
+  final AppTab currentTab;
+
+  static AppTab? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<CurrentTabScope>()
+        ?.currentTab;
+  }
+
+  @override
+  bool updateShouldNotify(CurrentTabScope oldWidget) =>
+      oldWidget.currentTab != currentTab;
+}
+
+class AppBarActionsScope extends InheritedWidget {
+  const AppBarActionsScope({
+    super.key,
+    required this.coordinator,
+    required super.child,
+  });
+  final AppBarActionsCoordinator coordinator;
+
+  static AppBarActionsCoordinator? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<AppBarActionsScope>()
+        ?.coordinator;
+  }
+
+  @override
+  bool updateShouldNotify(AppBarActionsScope oldWidget) =>
+      oldWidget.coordinator != coordinator;
+}
+
+// unified tab button below
+
+class _IconBtn extends StatelessWidget {
+  const _IconBtn({
+    this.icon,
+    this.asset,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  }) : assert((icon != null) ^ (asset != null), 'Provide either icon or asset');
+  final IconData? icon;
+  final String? asset;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color iconColor = active ? Colors.black87 : Colors.white;
+    final Color bgColor = active ? Colors.white : Colors.transparent;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        height: 40,
+        constraints: const BoxConstraints(minWidth: 56),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (asset != null)
+              ImageIcon(AssetImage(asset!), size: 22, color: iconColor)
+            else
+              Icon(icon, size: 22, color: iconColor),
+            if (active) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AppBarActionsCoordinator extends ChangeNotifier {
+  final Map<AppTab, List<AppBarActionsEntry>> _stacks = {};
+  AppTab _activeTab = AppTab.upcoming;
+  List<Widget> _current = const [];
+  bool _scheduled = false;
+
+  List<Widget> get currentActions => _current;
+
+  void setActiveTab(AppTab tab) {
+    if (_activeTab == tab) return;
+    _activeTab = tab;
+    _schedule();
+  }
+
+  AppBarActionsEntry register(Object owner, AppTab tab, List<Widget> actions) {
+    final entry = AppBarActionsEntry(owner, tab, actions);
+    _stacks.putIfAbsent(tab, () => <AppBarActionsEntry>[]).add(entry);
+    _schedule();
+    return entry;
+  }
+
+  void updateEntry(AppBarActionsEntry entry,
+      {AppTab? tab, List<Widget>? actions}) {
+    if (tab != null && entry.tab != tab) {
+      final stack = _stacks[entry.tab];
+      stack?.remove(entry);
+      if (stack?.isEmpty ?? false) _stacks.remove(entry.tab);
+      entry.tab = tab;
+      _stacks.putIfAbsent(tab, () => <AppBarActionsEntry>[]).add(entry);
+    }
+    if (actions != null) entry.actions = actions;
+    _schedule();
+  }
+
+  void removeEntry(AppBarActionsEntry entry) {
+    final stack = _stacks[entry.tab];
+    stack?.remove(entry);
+    if (stack?.isEmpty ?? false) _stacks.remove(entry.tab);
+    _schedule();
+  }
+
+  void _schedule() {
+    if (_scheduled) return;
+    _scheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scheduled = false;
+      final stack = _stacks[_activeTab];
+      final next = (stack != null && stack.isNotEmpty)
+          ? stack.last.actions
+          : const <Widget>[];
+      if (!listEquals(_current, next)) {
+        _current = next;
+        notifyListeners();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _stacks.clear();
+    super.dispose();
+  }
+}
+
+class AppBarActionsEntry {
+  AppBarActionsEntry(this.owner, this.tab, this.actions);
+  final Object owner;
+  AppTab tab;
+  List<Widget> actions;
+}
+

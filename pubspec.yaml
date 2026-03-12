@@ -1,0 +1,42 @@
+name: nhl_app
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^14.2.0
+  get_it: ^7.6.7
+  flutter_bloc: ^8.1.6
+  http: ^1.2.2
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.3.2
+  equatable: ^2.0.5
+  share_plus: ^7.2.2
+  shared_preferences: ^2.3.3
+  cached_network_image: ^3.4.1
+  flutter_local_notifications: ^17.2.2
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Arial
+      fonts:
+        - asset: assets/fonts/arial.ttf
+          weight: 400
+    - family: Arial
+      fonts:
+        - asset: assets/fonts/arialbold.ttf
+          weight: 900
+  assets:
+    - assets/icons/

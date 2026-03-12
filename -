@@ -1,0 +1,9 @@
+enum AppTab {upcoming, finals, favorites, profile }
+
+class Routes {
+  static const shell = '/';
+  static const upcoming = '/upcoming';
+  static const finals = '/finals';
+  static const favorites = '/favorites';
+  static const profile = '/profile';
+}
